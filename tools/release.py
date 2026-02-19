@@ -77,7 +77,7 @@ def release(mode: BumpMode) -> None:
     msg = f"Prepare for tag release {new_tag}."
     
     # Push the code to GitHub.
-    print(f"\nPushing changes to GitHub.\n")
+    print(f"Pushing changes to GitHub.\n")
     _cmd("git", "add", ".")
     _cmd("git", "commit", "-m", msg)
     _cmd("git", "push")
@@ -85,7 +85,7 @@ def release(mode: BumpMode) -> None:
     # _cmd("gh", "release", "create", f"v{new_tag}", "main.pdf",
     #      "--title", f"Release v{new_tag}", "--generate-notes")
     print(f"Release v{new_tag} created successfully.\n")
-    print("Cleaning up the build directory again...")
+    print("Cleaning up the build directory again...\n")
     _cleanup()
     print("Done.")
 
