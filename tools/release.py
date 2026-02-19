@@ -65,6 +65,7 @@ def _bump_version(version: Version, mode: BumpMode) -> Version:
         raise ValueError(f"Invalid bump mode {mode}")
     return Version(version_string)
 
+
 def release(mode: BumpMode) -> None:
     print("Cleaning up the build directory...\n")
     _cleanup()
