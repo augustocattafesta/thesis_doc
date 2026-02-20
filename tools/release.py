@@ -80,7 +80,7 @@ def release(mode: BumpMode) -> None:
     # Push the code to GitHub.
     print(f"Pushing changes to GitHub.\n")
     _cmd("git", "add", ".")
-    _cmd("git", "commit", "-m", msg)
+    _cmd("git", "commit", "-a", "-m", msg)
     _cmd("git", "push")
     # Publish the release.
     _cmd("gh", "release", "create", f"v{new_tag}", "main.pdf",
