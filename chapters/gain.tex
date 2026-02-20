@@ -1,0 +1,70 @@
+\chapter{Gain}
+\label{chap:gain}
+
+\section{Gain Calibration}
+To ensure that reconstructed energy is accurate, the detector requires a pixel-level calibration. This calibration is required both for noise and gain. In this section we will see how it is possible to calibrate non uniform gain response of the readout chip.
+
+There are two possible method to calibrate the gain. All of them require a monochromatic source, to know exactly the number of electrons produced by the incident photon. The first method uses only one-pixel events. This condition imposes that all the charge has been deposited in a single pixel, thus we can estimate the gain of the pixel as $g_{ij} = ADC_{ij} / n_e$, where $n_e$ is the number of electrons produced by the photon, which is $E_0 / 3.6$ eV (for silicon sensor). Considering the statistical nature of the ionization process, which introduces an uncertainty in $n_e$, which is distributed according to a Gaussian, we can calculate the mean value $\bar{g}_{ij} = 1/N\sum_k g_{ij, k}$. To have success in the estimate of the gain, we need a high number of one-pixel events. But we know that this type of events is less than a third of all the events. Considering the dimension of the chip, which consists of ~100000 pixels, in order to have a sufficient statistic we would need an impressive amount of events, and we would throw away the majority of them. This is still possible, but it would not be efficient to not consider most of the events. Using simulated dataset, this method shows a negative bias in the gain distribution. This is due to the zero suppression threshold applied to the clustering. It is not possible to use a zero threshold, because the noise is high enough to always contaminate the signal, and without applying a threshold the number of good events would be smaller. On the other hand, this method has very short tails.
+
+The second method allows to use all of the good events (the events accepted after the clustering process, which are one, two and three pixel events). It relies on the assumption that all of the charge of an event is deposited the cluster pixels, and the sum of the charge is equal to the total number of electrons produced by the photon $E_0 - \sum_{i,j} ADC_{ij}/g_{ij}  = 0$. This is independent of the number of pixels involved in an event. The estimation of the gain values is then performed with the least squares method, where we are minimizing the quantity:
+\begin{equation}
+    \chi^2 = \sum_k E_0 - \sum_{ij}ADC_{ij,k}/g_{ij},
+\end{equation}
+and we have a parameter for each pixel.
+This method allows to increase the number of pixels involved in the estimation, improving both the accuracy and the number of parameters estimated. We are not throwing away any good event, and we are using all the information of each event.
+This method presents a bias too, but is smaller than the previous method. The distribution has also a smaller FWHM, but the main problem is the presence of long tails and evident bad estimated parameters, in particular on the boarder of the illuminated region. (Note for the analysis: we can see if we can get the uncertainty of the parameters and throw away the pixels with a big uncertainty, knowing that they are not good estimates.) We can impose a cut on the number of events for each pixel, which is not too strong as would be for the previous method. 
+
+The following steps should be: understand the relation between the distribution properties and the suppression threshold (if the distribution becomes broader), understand if we can manually shift the values after the fit and how it behaves with increasing noise. We should also understand if the estimate is independent of the value of the gain and the pattern (in other words, understand the correlation between neighbor pixels).
+
+There are some fixes to do for the second method, but it is with no doubt the best method. We can see that the number of events per pixel scales with $3N/n_{pix}$ total number of events, which means that it is easy to accumulate enough statistics to do a good fit for the majority of the pixels (e.g if N = $10^5$, $n_{pix} =1500$, we have around 180 events per pixel, while with the first method the average is 1.5 events/pix). For the first method it scales with a very low power of N.
+
+To conclude, the first method is a good estimator of the gain if we have a few events. The bias is a bit larger than the lsq, but it is still good. The second method is the best method when we have a large number of events. I expect that for all the chip, with about 10 millions of events we can perform a very good gain calibration. 
+
+I should see more carefully the way I'm cutting bad results with the signal power of the lsq.
+
+The real test for the goodness of the gain resolution is the energy reconstruction. We should see a spectrum with a broadening caused by the Fano factor.
+
+We should understand if correcting the bias from the reconstructed energy instead of comparing the residuals with a MC reconstruction returns the same results or if there are some differences. I think that doing the bias correction on the reconstructed energy adds a difficult step, which is what is the correct threshold to set for the reconstruction?
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figures/gain_correction.png}
+    \caption{We should put a plot with only the important histograms (no cal, mc cal and fit cal only with the method we want to show). Furthermore, we should use the S/N that we expect from the data}
+    \label{fig:enter-label}
+\end{figure}
+
+\section{Studying the bias dependence on the S/N}
+I'm applying the following procedure: we have a dataset with non-uniform gain response, with a certain S/N ratio. We calculate a first estimation of the gain map, but we know that there is a bias in the residuals (We still need to understand the role of the zero suppression in this step, for now we are setting it at 1 sigma ENC). To correct the bias, we run a simulation with the same S/N but with uniform pixel response. We should find a way to correctly show that the bias is independent of the pattern of the gain map, thus we obtain the same bias on the residuals. At this point, we fit the residuals hisotgram with a gaussian to find the center and then we can apply the correction to the gain. After this we can reconstruct the event as usual.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figures/gain_res_bias.png}
+    \caption{This is a simulation with S/N 25, num events = $2*10^5$, $E=6$ keV, disk$=0.05$ cm diameter. The random dataset has a gain uniformly-distributed from 0.8 to 1.2, while the uniform has a gain of 1. We should also try to see if there is a dependence on the mean of the distribution, e.g. we try a range between 0.4 and 0.6 and compare the bias of a unform map of 1. There's a dependence on the value, with the bias increasing with lower gain.}
+    \label{fig:enter-label}
+\end{figure}
+
+ATTENTION: in this step we don't want to reconstruct the exact eneergy of the line. Our goal is to match the reconstruction that we would perform with the monte carlo gain map. We don't want to fix the bias using the energy of the line, but we need to use the mean reconstructed energy for a given zero suppression threshold. The correction with the residuals seems to be a good method to match this reconstruction.
+
+
+Considering that the bias depends on the value of the gain, we cannot use a uniform map with 1. I tested a method that seems to work. We calculate the first estimate of the gain, then we create a unform map with gain set to the mean of the previous map. We run a simulation with that map and reconstruct the gain. We calculate the residuals and fit with a gaussian to find the bias. Then we apply the correction to the first gain map. This method seems to work with high S/N. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figures/gain_recon.png}
+    \caption{This plot shows the reconstructed spectra in the 3 cases: with no correction, with mc correction and with calibrated correction. The simulation is performed with SNR 20, 6 keV, 500000 events, 3 sigma of zero sup in all the steps (calibration and reconstruction). We can see that the mc and calibrated correction are identical, so the method works. We still need to find a way to justify some choices.}
+    \label{fig:enter-label}
+\end{figure}
+
+Questions:
+
+Do we expect a dependence of the gain on the energy of the photon? My guess is that this is not the case, as there is no charge multiplication step in the detector.
+
+How can we justify taking the mean of the map? And also how can we demonstrate that there is no dependence on the gain distribution (e.g. it doesn't have to be symmetrical around the mean value).
+
+We should also check which variation can we detect with this method, e.g. if taking the mean is good also if there is a 40\% variation of the gain (I)
+
+
+
+
+
+
+

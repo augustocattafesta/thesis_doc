@@ -83,8 +83,8 @@ def release(mode: BumpMode) -> None:
     _cmd("git", "commit", "-m", msg)
     _cmd("git", "push")
     # Publish the release.
-    # _cmd("gh", "release", "create", f"v{new_tag}", "main.pdf",
-    #      "--title", f"Release v{new_tag}", "--generate-notes")
+    _cmd("gh", "release", "create", f"v{new_tag}", "main.pdf",
+         "--title", f"Release v{new_tag}", "--generate-notes")
     print(f"Release v{new_tag} created successfully.\n")
     print("Cleaning up the build directory again...\n")
     _cleanup()
